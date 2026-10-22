@@ -98,7 +98,7 @@ def _calls(src: Source, pattern: re.Pattern, rule: str, decl_guard: bool = True)
         if decl_guard and _C_DECL_BEFORE.search(bare, max(0, m.start() - 40), m.start()):
             continue
         close = matching_close(bare, m.end() - 1)
-        yield Match(rule, m.start(), close, m.group(1), _kind_of(m.group(1)))
+        yield Match(rule, m.start(), close, re.sub(r"\s+", "", m.group(0)[:-1]), _kind_of(m.group(1)))
 
 
 def _casecmp_calls(src: Source, pattern: re.Pattern, rule: str) -> Iterator[Match]:
