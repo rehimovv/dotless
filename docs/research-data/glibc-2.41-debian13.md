@@ -6,6 +6,7 @@
 | c | `toupper() loop on "integer"` | `INTEGER` | `INTEGER` | `iNTEGER` | `iNTEGER` | `\xddNTEGER` | **YES** |
 | c | `strcasecmp("INTEGER", "integer")` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
 | c | `strncasecmp("FILE", "file", 4)` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
+| c | `strcasestr("MIME-INFO", "info") != NULL` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
 | c | `towlower(L'I')` | `U+0069` | `U+0069` | `U+0131` | `U+0131` | `U+0131` | **YES** |
 | c | `towupper(L'i')` | `U+0049` | `U+0049` | `U+0130` | `U+0130` | `U+0130` | **YES** |
 | c | `wcscasecmp(L"INTEGER", L"integer")` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |

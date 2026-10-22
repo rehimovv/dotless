@@ -21,7 +21,8 @@ recorded.
 * Measured with: Debian 13 (trixie), glibc 2.41, GLib 2.84, Vala 0.56.18,
   Python 3.13.5, gjs 1.82.3, node 20.19.2, rustc 1.85.1, glib-rs 0.20.12;
   and Alpine 3.20 (musl) for comparison.
-  CI job: https://gitlab.com/rehimovv/dotless/-/jobs/17367075808
+  CI jobs: https://gitlab.com/rehimovv/dotless/-/jobs/17367126376 (glibc),
+  https://gitlab.com/rehimovv/dotless/-/jobs/17367075809 (musl)
 
 ## Summary
 
@@ -77,6 +78,7 @@ the probe was not run for that locale.
 | c | `toupper() loop on "integer"` | `INTEGER` | `INTEGER` | `iNTEGER` | `iNTEGER` | `\xddNTEGER` | **YES** |
 | c | `strcasecmp("INTEGER", "integer")` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
 | c | `strncasecmp("FILE", "file", 4)` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
+| c | `strcasestr("MIME-INFO", "info") != NULL` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
 | c | `towlower(L'I')` | `U+0069` | `U+0069` | `U+0131` | `U+0131` | `U+0131` | **YES** |
 | c | `towupper(L'i')` | `U+0049` | `U+0049` | `U+0130` | `U+0130` | `U+0130` | **YES** |
 | c | `wcscasecmp(L"INTEGER", L"integer")` | `equal` | `equal` | `NOT equal` | `NOT equal` | `NOT equal` | **YES** |
