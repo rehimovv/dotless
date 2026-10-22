@@ -69,3 +69,22 @@ research:musl:
     - sh research/run.sh
   artifacts:
     paths: [research/out/results.md]
+
+# Runs the reproducers for the findings in reports/ on Debian, with the
+# distribution's evolution-data-server.
+reproducers:
+  stage: research
+  needs: []
+  image: debian:trixie
+  rules:
+    - changes: [reproducers/**/*]
+    - if: $CI_PIPELINE_SOURCE == "web"
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+  script:
+    - apt-get update -qq
+    - apt-get install -qq -y --no-install-recommends
+        locales build-essential pkg-config libglib2.0-dev evolution-data-server
+        curl ca-certificates > /dev/null
+    - for l in tr_TR az_AZ; do localedef -i $l -f UTF-8 $l.UTF-8; done
+    - sh reproducers/run.sh
