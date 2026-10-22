@@ -12,11 +12,28 @@
 #include <dlfcn.h>
 #include <locale.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <gio/gio.h>
+#include <gio/gunixinputstream.h>
 
 typedef GInputStream *(*NewFunc) (GInputStream *base);
 typedef gboolean (*NstringFunc) (gpointer is, guchar **data, GCancellable *c, GError **error);
 typedef gboolean (*NstringBytesFunc) (gpointer is, GBytes **out, gboolean progress, GCancellable *c, GError **error);
+
+/* A pollable stream over a pipe, like the socket the provider reads from. */
+static GInputStream *
+stream_for (const char *text)
+{
+  int fds[2];
+
+  if (pipe (fds) != 0)
+    return NULL;
+  if (write (fds[1], text, strlen (text)) < 0)
+    return NULL;
+  close (fds[1]);
+  return g_unix_input_stream_new (fds[0], TRUE);
+}
 
 int
 main (int argc, char **argv)
@@ -82,6 +99,8 @@ main (int argc, char **argv)
       GBytes *bytes = NULL;
       GError *error = NULL;
       gboolean ok;
+      g_autofree char *line = g_strdup_printf ("%s )
+", tokens[i]);
 
       base = g_memory_input_stream_new_from_data (g_strdup_printf ("%s )\r\n", tokens[i]), -1, g_free);
       is = new_stream (base);

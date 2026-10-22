@@ -5,7 +5,7 @@ set -eu
 cd "$(dirname "$0")"
 EDS_COMMIT=${EDS_COMMIT:-e3d4270d1f61a48f0b428b3e2899ae6a320438eb}
 mkdir -p out
-GLIB="$(pkg-config --cflags --libs gio-2.0)"
+GLIB="$(pkg-config --cflags --libs gio-2.0 gio-unix-2.0)"
 
 dpkg-query -W -f='evolution-data-server ${Version}\n' evolution-data-server || true
 
