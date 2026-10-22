@@ -43,6 +43,21 @@ main (int argc, char **argv)
       return 2;
     }
 
+  if (g_getenv ("REPRO_DEBUG"))
+    {
+      GInputStream *base = g_memory_input_stream_new_from_data (g_strdup ("NIL )\r\n"), -1, g_free);
+      GInputStream *is = new_stream (base);
+      char buf[64] = { 0 };
+      GError *error = NULL;
+      gssize n;
+
+      printf ("debug: type=%s filter=%d same-base=%d\n", G_OBJECT_TYPE_NAME (is),
+              G_IS_FILTER_INPUT_STREAM (is),
+              G_IS_FILTER_INPUT_STREAM (is) && g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (is)) == base);
+      n = g_input_stream_read (base, buf, sizeof buf - 1, NULL, &error);
+      printf ("debug: direct read of base: %" G_GSSIZE_FORMAT " \"%s\"\n", n, buf);
+    }
+
   for (gsize i = 0; i < G_N_ELEMENTS (tokens); i++)
     {
       GInputStream *base, *is;

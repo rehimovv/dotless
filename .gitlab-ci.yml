@@ -87,4 +87,4 @@ reproducers:
         locales build-essential pkg-config libglib2.0-dev evolution-data-server
         curl ca-certificates > /dev/null
     - for l in tr_TR az_AZ; do localedef -i $l -f UTF-8 $l.UTF-8; done
-    - sh reproducers/run.sh
+    - REPRO_DEBUG=1 sh reproducers/run.sh

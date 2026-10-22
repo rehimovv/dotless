@@ -22,6 +22,6 @@ for r in "imapx $IMAPX" ldap ntlm; do
     set -- $r
     for l in C.UTF-8 tr_TR.UTF-8 az_AZ.UTF-8; do
         echo "== $1 @ $l"
-        LC_ALL=$l ./out/"$@" || echo "(exit $?)"
+        LC_ALL=$l REPRO_DEBUG=${REPRO_DEBUG:-} ./out/"$@" || echo "(exit $?)"
     done
 done
