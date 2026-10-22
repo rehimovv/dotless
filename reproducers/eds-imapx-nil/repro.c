@@ -56,6 +56,23 @@ main (int argc, char **argv)
               G_IS_FILTER_INPUT_STREAM (is) && g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (is)) == base);
       n = g_input_stream_read (base, buf, sizeof buf - 1, NULL, &error);
       printf ("debug: direct read of base: %" G_GSSIZE_FORMAT " \"%s\"\n", n, buf);
+
+      {
+        typedef int (*TokenFunc) (gpointer is, guchar **token, guint *len, GCancellable *c, GError **error);
+        TokenFunc token = (TokenFunc) dlsym (module, "camel_imapx_input_stream_token");
+        GInputStream *b2 = g_memory_input_stream_new_from_data (g_strdup ("NIL )\r\n"), -1, g_free);
+        GInputStream *s2 = new_stream (b2);
+
+        for (int k = 0; token && k < 3; k++)
+          {
+            guchar *t = NULL;
+            guint len = 0;
+            int tok = token (s2, &t, &len, NULL, &error);
+            printf ("debug: token %d: type=%d len=%u \"%.*s\" %s\n", k, tok, len, (int) len,
+                    t ? (char *) t : "", error ? error->message : "");
+            g_clear_error (&error);
+          }
+      }
     }
 
   for (gsize i = 0; i < G_N_ELEMENTS (tokens); i++)
