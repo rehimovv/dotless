@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotless"
+version = "0.1.0"
+description = "Find Turkish/Azerbaijani dotted and dotless I bugs caused by locale-dependent case mapping"
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Ramal Rahimov" }]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["i18n", "l10n", "locale", "turkish", "azerbaijani", "gnome", "linter", "static-analysis"]
+classifiers = [
+    "Environment :: Console",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Localization",
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/rehimovv/dotless"
+Mirror = "https://github.com/rehimovv/dotless"
+
+[project.scripts]
+dotless = "dotless.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
