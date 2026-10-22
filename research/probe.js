@@ -20,7 +20,9 @@ emit('toLowerCase()', upper.toLowerCase());
 emit('toUpperCase()', lower.toUpperCase());
 emit('toLocaleLowerCase()', upper.toLocaleLowerCase());
 emit('toLocaleUpperCase()', lower.toLocaleUpperCase());
-emit("toLocaleLowerCase('en-US')", upper.toLocaleLowerCase('en-US'));
+emit('toLocaleLowerCase(undefined)', upper.toLocaleLowerCase(undefined));
+emit('toLocaleLowerCase([])', upper.toLocaleLowerCase([]));
+emit("toLocaleLowerCase('en-US')",upper.toLocaleLowerCase('en-US'));
 emit("toLocaleLowerCase('tr')", upper.toLocaleLowerCase('tr'));
 emit("localeCompare(..., {sensitivity: 'base'}) === 0",
     upper.localeCompare(lower, undefined, {sensitivity: 'base'}) === 0 ? 'equal' : 'NOT equal');

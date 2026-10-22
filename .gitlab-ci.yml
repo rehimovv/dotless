@@ -29,12 +29,13 @@ research:glibc:
         locales build-essential pkg-config libglib2.0-dev valac
         python3 python3-gi gir1.2-glib-2.0 gjs nodejs cargo rustc ca-certificates
         > /dev/null
-    - for l in en_US.UTF-8 tr_TR.UTF-8 az_AZ.UTF-8; do sed -i "s/^# *\($l UTF-8\)/\1/" /etc/locale.gen; done
-    - sed -i 's/^# *\(tr_TR ISO-8859-9\)/\1/' /etc/locale.gen
-    - locale-gen
+    - for l in en_US tr_TR az_AZ; do localedef -i $l -f UTF-8 $l.UTF-8; done
+    - localedef -i tr_TR -f ISO-8859-9 tr_TR.ISO-8859-9
     - locale -a
     - gjs --version; node --version; valac --version; python3 --version; rustc --version; ldd --version | head -1
     - sh research/run.sh
+    # Which high-level glib-rs wrappers end up in g_utf8_strdown/strup?
+    - grep -rn -B3 "ffi::g_utf8_str\(down\|up\)\|ffi::g_utf8_casefold" ~/.cargo/registry/src/*/glib-0.*/src || true
   artifacts:
     paths: [research/out/results.tsv, research/out/results.md]
 
