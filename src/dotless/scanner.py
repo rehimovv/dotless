@@ -74,6 +74,7 @@ Matcher = Callable[[Source], Iterator[Match]]
 # ---------------------------------------------------------------- C / C++
 
 _C_DECL_BEFORE = re.compile(r"(?:\b(?:int|extern|static|inline|define|undef|wint_t|char)\s*\**\s*|#\s*(?:define|undef)\s+)$")
+_C_PARAMS = re.compile(r"\s*(?:(?:const|unsigned|signed|struct|volatile)\s+)*[A-Za-z_]\w*(?:\s+|\s*\*+\s*)[A-Za-z_]\w*\s*[,)]")
 _C_CTYPE = re.compile(r"(?<![\w$.>:])(?:std\s*::\s*)?(tolower|toupper|_tolower|_toupper)\s*\(")
 _C_WIDE = re.compile(r"(?<![\w$.>:])(?:std\s*::\s*)?(towlower|towupper)\s*\(")
 _C_CASECMP = re.compile(r"(?<![\w$.>:])(strcasecmp|strncasecmp|strcasestr|wcscasecmp|wcsncasecmp)\s*\(")
@@ -98,6 +99,9 @@ def _calls(src: Source, pattern: re.Pattern, rule: str, decl_guard: bool = True)
         if decl_guard and _C_DECL_BEFORE.search(bare, max(0, m.start() - 40), m.start()):
             continue
         close = matching_close(bare, m.end() - 1)
+        # Function definitions and prototypes: "name (const gchar *str, ..."
+        if decl_guard and _C_PARAMS.match(bare, m.end()):
+            continue
         yield Match(rule, m.start(), close, re.sub(r"\s+", "", m.group(0)[:-1]), _kind_of(m.group(1)))
 
 

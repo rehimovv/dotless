@@ -94,3 +94,26 @@ def test_variable_reassignment_stops_tracking():
         'if (g_str_equal (s, "ini")) {}\n'
     )
     assert [f.severity for f in scan_text(code, "t.c", "c")] == ["low"]
+
+
+# Refinements made after scanning GNOME modules (see reports/README.md).
+
+
+def test_prototypes_and_definitions_are_not_calls():
+    code = "gchar *g_utf8_strup (const gchar *str,\n                     gssize len);\ng_strdown (gchar *string)\n{\n}\n"
+    assert scan_text(code, "t.c", "c") == []
+
+
+def test_define_constants_are_resolved():
+    code = '#define PREFIX "ldapi://"\n#define OTHER "ldap://"\nx = strncasecmp (p, PREFIX, 8);\ny = strncasecmp (p, OTHER, 7);\n'
+    assert [(f.line, f.severity) for f in scan_text(code, "t.c", "c")] == [(3, "high")]
+
+
+def test_hash_table_insert_is_low_but_lookup_is_high():
+    code = "g_hash_table_add (set, g_utf8_strdown (w, -1));\ng_hash_table_lookup (set, g_utf8_strdown (w, -1));\n"
+    assert [f.severity for f in scan_text(code, "t.c", "c")] == ["low", "high"]
+
+
+def test_search_keyword_variable_is_not_high():
+    assert [f.severity for f in scan_text("keywords = g_utf8_strdown (s, -1);", "t.c", "c")] == ["low"]
+    assert [f.severity for f in scan_text("mime_type = g_utf8_strdown (s, -1);", "t.c", "c")] == ["high"]

@@ -54,9 +54,15 @@ KEY_FUNC_PREFIXES = (
     "g_enum_get_value_by_", "g_flags_get_value_by_",
 )
 KEY_METHODS = {
-    "lookup", "lookup_extended", "get", "has", "has_key", "set", "insert",
-    "replace", "contains_key", "get_string", "get_boolean", "get_int",
-    "get_value", "get_data", "set_data", "setdefault", "pop",
+    "lookup", "lookup_extended", "get", "has", "has_key", "contains_key",
+    "get_string", "get_boolean", "get_int", "get_value", "get_data",
+    "setdefault", "pop",
+}
+# Storing a converted key is only a problem if something later looks it up
+# with a differently converted string; that is not visible locally.
+INSERT_FUNCS = {
+    "g_hash_table_add", "g_hash_table_insert", "g_hash_table_replace",
+    "g_tree_insert", "g_tree_replace", "insert", "set", "add", "push", "append",
 }
 # Calls and methods that pass a string through without changing its case.
 TRANSPARENT_FUNCS = {
@@ -68,11 +74,15 @@ TRANSPARENT_METHODS = {
     "as_str", "as_ref", "strip", "trim", "toString", "get_string",
 }
 IGNORED_USES = {"g_free", "free", "g_clear_pointer", "g_strfreev", "g_steal_pointer", "g_strdup", "strlen"}
+# Variable names that mark machine-readable identifiers. "key" and
+# "keyword" are deliberately absent: in GNOME code they usually hold
+# keyboard keys or user search terms.
 KEYISH_WORDS = {
     "ext", "exts", "extension", "extensions", "suffix", "mime", "mimetype",
-    "scheme", "protocol", "proto", "keyword", "keywords", "charset",
-    "encoding", "codeset", "header", "hash", "key", "keys", "verb",
+    "scheme", "protocol", "proto", "charset", "encoding", "codeset", "header",
 }
+_DEFINE = re.compile(r'^[ 	]*#[ 	]*define[ 	]+(\w+)[ 	]+("(?:[^"\
+]|\.)*")[ 	]*$', re.M)
 
 
 @dataclass
@@ -151,8 +161,24 @@ def enclosing(bare: str, pos: int, limit: int = 2000) -> tuple[int, str, int] | 
     return None
 
 
+def defines(src: Source) -> dict[str, str]:
+    """``#define NAME "literal"`` constants of a file (cached on ``src``)."""
+    cached = getattr(src, "_dotless_defines", None)
+    if cached is None:
+        cached = {m.group(1): literal_value(m.group(2)) for m in _DEFINE.finditer(src.text)} if "#" in src.text else {}
+        src._dotless_defines = cached
+    return cached
+
+
 def literals_in(src: Source, start: int, end: int) -> list[str]:
+    """Literal values in text[start:end], including #define'd constants."""
     out = []
+    consts = defines(src)
+    if consts:
+        for m in re.finditer(r"[A-Za-z_]\w*", src.bare[start:end]):
+            v = consts.get(m.group(0))
+            if v is not None:
+                out.append(v)
     for s, e in src.strings:
         if s >= end:
             break
@@ -259,6 +285,8 @@ def judge_expression(src: Source, start: int, end: int, kind: str, lang: str, de
         return judge_expression(src, name_start, close, kind, lang, depth + 1)
     if name in COMPARE_FUNCS or name in COMPARE_METHODS:
         return judge_literals(literals_in(src, open_idx, close), kind, f"passed to {name}() with")
+    if name in INSERT_FUNCS:
+        return Verdict("low", f"stored as a key with {name}()")
     if name.startswith(KEY_FUNC_PREFIXES) or name in KEY_METHODS:
         return Verdict("high", f"used as a lookup key in {name}()")
     if name in IGNORED_USES:
