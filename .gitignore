@@ -1,0 +1,9 @@
+__pycache__/
+*.egg-info/
+/build/
+/dist/
+.pytest_cache/
+research/out/
+research/rust-probe/target/
+research/rust-probe/Cargo.lock
+/gnome/
