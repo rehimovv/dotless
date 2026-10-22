@@ -18,6 +18,7 @@
 #include <gio/gunixinputstream.h>
 
 typedef GInputStream *(*NewFunc) (GInputStream *base);
+typedef int (*TokenFunc) (gpointer is, guchar **token, guint *len, GCancellable *c, GError **error);
 typedef gboolean (*NstringFunc) (gpointer is, guchar **data, GCancellable *c, GError **error);
 typedef gboolean (*NstringBytesFunc) (gpointer is, GBytes **out, gboolean progress, GCancellable *c, GError **error);
 
@@ -41,6 +42,7 @@ main (int argc, char **argv)
   const char *tokens[] = { "NIL", "nil", "Nil" };
   void *module;
   NewFunc new_stream;
+  TokenFunc token;
   NstringFunc nstring;
   NstringBytesFunc nstring_bytes;
 
@@ -52,6 +54,7 @@ main (int argc, char **argv)
       return 2;
     }
   new_stream = (NewFunc) dlsym (module, "camel_imapx_input_stream_new");
+  token = (TokenFunc) dlsym (module, "camel_imapx_input_stream_token");
   nstring = (NstringFunc) dlsym (module, "camel_imapx_input_stream_nstring");
   nstring_bytes = (NstringBytesFunc) dlsym (module, "camel_imapx_input_stream_nstring_bytes");
   if (!new_stream || !nstring)
@@ -60,68 +63,48 @@ main (int argc, char **argv)
       return 2;
     }
 
-  if (g_getenv ("REPRO_DEBUG"))
+  if (g_getenv ("REPRO_DEBUG") && *g_getenv ("REPRO_DEBUG") && token)
     {
-      GInputStream *base = g_memory_input_stream_new_from_data (g_strdup ("NIL )\r\n"), -1, g_free);
-      GInputStream *is = new_stream (base);
-      char buf[64] = { 0 };
+      GInputStream *is = new_stream (stream_for ("NIL )\r\n"));
       GError *error = NULL;
-      gssize n;
 
-      printf ("debug: type=%s filter=%d same-base=%d\n", G_OBJECT_TYPE_NAME (is),
-              G_IS_FILTER_INPUT_STREAM (is),
-              G_IS_FILTER_INPUT_STREAM (is) && g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (is)) == base);
-      n = g_input_stream_read (base, buf, sizeof buf - 1, NULL, &error);
-      printf ("debug: direct read of base: %" G_GSSIZE_FORMAT " \"%s\"\n", n, buf);
+      for (int k = 0; k < 3; k++)
+        {
+          guchar *t = NULL;
+          guint len = 0;
+          int tok = token (is, &t, &len, NULL, &error);
 
-      {
-        typedef int (*TokenFunc) (gpointer is, guchar **token, guint *len, GCancellable *c, GError **error);
-        TokenFunc token = (TokenFunc) dlsym (module, "camel_imapx_input_stream_token");
-        GInputStream *b2 = g_memory_input_stream_new_from_data (g_strdup ("NIL )\r\n"), -1, g_free);
-        GInputStream *s2 = new_stream (b2);
-
-        for (int k = 0; token && k < 3; k++)
-          {
-            guchar *t = NULL;
-            guint len = 0;
-            int tok = token (s2, &t, &len, NULL, &error);
-            printf ("debug: token %d: type=%d len=%u \"%.*s\" %s\n", k, tok, len, (int) len,
-                    t ? (char *) t : "", error ? error->message : "");
-            g_clear_error (&error);
-          }
-      }
+          printf ("debug: token %d: type=%d \"%.*s\" %s\n", k, tok, (int) len,
+                  t ? (char *) t : "", error ? error->message : "");
+          g_clear_error (&error);
+        }
     }
 
   for (gsize i = 0; i < G_N_ELEMENTS (tokens); i++)
     {
-      GInputStream *base, *is;
+      g_autofree char *line = g_strdup_printf ("%s )\r\n", tokens[i]);
+      GInputStream *is;
       guchar *data = (guchar *) "unset";
       GBytes *bytes = NULL;
       GError *error = NULL;
       gboolean ok;
-      g_autofree char *line = g_strdup_printf ("%s )
-", tokens[i]);
 
-      base = g_memory_input_stream_new_from_data (g_strdup_printf ("%s )\r\n", tokens[i]), -1, g_free);
-      is = new_stream (base);
+      is = new_stream (stream_for (line));
       ok = nstring (is, &data, NULL, &error);
       printf ("nstring(\"%s\"): %s\n", tokens[i],
               ok ? (data == NULL ? "NIL" : "a string") : error->message);
       g_clear_error (&error);
       g_object_unref (is);
-      g_object_unref (base);
 
       if (!nstring_bytes)
         continue;
-      base = g_memory_input_stream_new_from_data (g_strdup_printf ("%s )\r\n", tokens[i]), -1, g_free);
-      is = new_stream (base);
+      is = new_stream (stream_for (line));
       ok = nstring_bytes (is, &bytes, FALSE, NULL, &error);
       printf ("nstring_bytes(\"%s\"): %s\n", tokens[i],
               ok ? (bytes == NULL ? "NIL" : "a string") : error->message);
       g_clear_error (&error);
       g_clear_pointer (&bytes, g_bytes_unref);
       g_object_unref (is);
-      g_object_unref (base);
     }
   return 0;
 }
