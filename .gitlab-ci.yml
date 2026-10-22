@@ -70,8 +70,8 @@ research:musl:
   artifacts:
     paths: [research/out/results.md]
 
-# Runs the reproducers for the findings in reports/ on Debian, with the
-# distribution's evolution-data-server.
+# Runs the reproducers for the findings in reports/ on Debian with Turkish
+# and Azerbaijani locales.
 reproducers:
   stage: research
   needs: []
@@ -84,7 +84,7 @@ reproducers:
   script:
     - apt-get update -qq
     - apt-get install -qq -y --no-install-recommends
-        locales build-essential pkg-config libglib2.0-dev evolution-data-server
+        locales build-essential pkg-config libglib2.0-dev
         curl ca-certificates > /dev/null
     - for l in tr_TR az_AZ; do localedef -i $l -f UTF-8 $l.UTF-8; done
-    - REPRO_DEBUG=1 sh reproducers/run.sh
+    - sh reproducers/run.sh

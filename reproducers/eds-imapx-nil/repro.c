@@ -1,110 +1,40 @@
 /* evolution-data-server: IMAP "nil" is not recognised in Turkic locales.
  *
- * camel-imapx-input-stream.c checks for the NIL atom with
+ * camel-imapx-input-stream.c (camel_imapx_input_stream_nstring() and
+ * camel_imapx_input_stream_nstring_bytes()) detects the NIL atom with
  *     toupper (p[0]) == 'N' && toupper (p[1]) == 'I' && toupper (p[2]) == 'L'
  * In tr_TR.UTF-8 / az_AZ.UTF-8 glibc's toupper ('i') returns 'i', so a
- * lower-case "nil" (IMAP atoms are case-insensitive) is rejected with
- * "expecting nstring".
+ * lower-case or mixed-case "nil" (IMAP atoms are case-insensitive,
+ * RFC 3501 section 9) is rejected with "expecting nstring".
  *
- * This calls the real functions from the installed IMAPX provider module.
- * Usage: repro /path/to/libcamelimapx.so
+ * Calling the functions through the installed provider module did not work
+ * (its stream reports end-of-data on the first read even in C.UTF-8), so
+ * this runs the condition copied verbatim from the scanned commit; run.sh
+ * checks that the copied lines are still present in the source.
  */
-#include <dlfcn.h>
+#include <ctype.h>
 #include <locale.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <gio/gio.h>
-#include <gio/gunixinputstream.h>
 
-typedef GInputStream *(*NewFunc) (GInputStream *base);
-typedef int (*TokenFunc) (gpointer is, guchar **token, guint *len, GCancellable *c, GError **error);
-typedef gboolean (*NstringFunc) (gpointer is, guchar **data, GCancellable *c, GError **error);
-typedef gboolean (*NstringBytesFunc) (gpointer is, GBytes **out, gboolean progress, GCancellable *c, GError **error);
-
-/* A pollable stream over a pipe, like the socket the provider reads from. */
-static GInputStream *
-stream_for (const char *text)
+static int
+is_nil (const char *p)
 {
-  int fds[2];
-
-  if (pipe (fds) != 0)
-    return NULL;
-  if (write (fds[1], text, strlen (text)) < 0)
-    return NULL;
-  close (fds[1]);
-  return g_unix_input_stream_new (fds[0], TRUE);
+  /* Copied from camel-imapx-input-stream.c */
+  if (toupper (p[0]) == 'N' &&
+      toupper (p[1]) == 'I' &&
+      toupper (p[2]) == 'L' &&
+      p[3] == 0)
+    return 1;
+  return 0;
 }
 
 int
-main (int argc, char **argv)
+main (void)
 {
   const char *tokens[] = { "NIL", "nil", "Nil" };
-  void *module;
-  NewFunc new_stream;
-  TokenFunc token;
-  NstringFunc nstring;
-  NstringBytesFunc nstring_bytes;
 
   setlocale (LC_ALL, "");
-  module = dlopen (argv[1], RTLD_NOW | RTLD_GLOBAL);
-  if (!module)
-    {
-      printf ("dlopen failed: %s\n", dlerror ());
-      return 2;
-    }
-  new_stream = (NewFunc) dlsym (module, "camel_imapx_input_stream_new");
-  token = (TokenFunc) dlsym (module, "camel_imapx_input_stream_token");
-  nstring = (NstringFunc) dlsym (module, "camel_imapx_input_stream_nstring");
-  nstring_bytes = (NstringBytesFunc) dlsym (module, "camel_imapx_input_stream_nstring_bytes");
-  if (!new_stream || !nstring)
-    {
-      printf ("symbols not found\n");
-      return 2;
-    }
-
-  if (g_getenv ("REPRO_DEBUG") && *g_getenv ("REPRO_DEBUG") && token)
-    {
-      GInputStream *is = new_stream (stream_for ("NIL )\r\n"));
-      GError *error = NULL;
-
-      for (int k = 0; k < 3; k++)
-        {
-          guchar *t = NULL;
-          guint len = 0;
-          int tok = token (is, &t, &len, NULL, &error);
-
-          printf ("debug: token %d: type=%d \"%.*s\" %s\n", k, tok, (int) len,
-                  t ? (char *) t : "", error ? error->message : "");
-          g_clear_error (&error);
-        }
-    }
-
-  for (gsize i = 0; i < G_N_ELEMENTS (tokens); i++)
-    {
-      g_autofree char *line = g_strdup_printf ("%s )\r\n", tokens[i]);
-      GInputStream *is;
-      guchar *data = (guchar *) "unset";
-      GBytes *bytes = NULL;
-      GError *error = NULL;
-      gboolean ok;
-
-      is = new_stream (stream_for (line));
-      ok = nstring (is, &data, NULL, &error);
-      printf ("nstring(\"%s\"): %s\n", tokens[i],
-              ok ? (data == NULL ? "NIL" : "a string") : error->message);
-      g_clear_error (&error);
-      g_object_unref (is);
-
-      if (!nstring_bytes)
-        continue;
-      is = new_stream (stream_for (line));
-      ok = nstring_bytes (is, &bytes, FALSE, NULL, &error);
-      printf ("nstring_bytes(\"%s\"): %s\n", tokens[i],
-              ok ? (bytes == NULL ? "NIL" : "a string") : error->message);
-      g_clear_error (&error);
-      g_clear_pointer (&bytes, g_bytes_unref);
-      g_object_unref (is);
-    }
+  for (unsigned i = 0; i < sizeof tokens / sizeof *tokens; i++)
+    printf ("\"%s\": %s\n", tokens[i], is_nil (tokens[i]) ? "NIL" : "expecting nstring (error)");
   return 0;
 }
