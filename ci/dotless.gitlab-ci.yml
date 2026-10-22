@@ -1,0 +1,31 @@
+# dotless GitLab CI template.
+#
+# Add to your .gitlab-ci.yml:
+#
+#   include: 'https://gitlab.com/rehimovv/dotless/-/raw/main/ci/dotless.gitlab-ci.yml'
+#
+# Findings appear in merge request Code Quality widgets. Tune with:
+#   DOTLESS_PATHS         paths to scan (default ".")
+#   DOTLESS_MIN_SEVERITY  "low" or "high" (default "high")
+#   DOTLESS_ARGS          extra arguments, e.g. "--exclude tests" (fnmatch patterns)
+
+dotless:
+  stage: test
+  image: python:3.12-slim
+  needs: []
+  variables:
+    DOTLESS_PATHS: "."
+    DOTLESS_MIN_SEVERITY: "high"
+    DOTLESS_ARGS: ""
+    DOTLESS_VERSION: "main"
+  before_script:
+    - pip install --quiet --disable-pip-version-check "dotless @ https://gitlab.com/rehimovv/dotless/-/archive/${DOTLESS_VERSION}/dotless-${DOTLESS_VERSION}.tar.gz"
+  script:
+    - dotless scan $DOTLESS_PATHS --min-severity "$DOTLESS_MIN_SEVERITY" $DOTLESS_ARGS --format gitlab --output gl-code-quality-report.json --exit-zero
+    - dotless scan $DOTLESS_PATHS --min-severity "$DOTLESS_MIN_SEVERITY" $DOTLESS_ARGS
+  allow_failure: true
+  artifacts:
+    when: always
+    reports:
+      codequality: gl-code-quality-report.json
+    paths: [gl-code-quality-report.json]

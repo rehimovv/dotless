@@ -8,7 +8,21 @@ test:
   script:
     - pip install --quiet pytest .
     - pytest -q
-    - dotless scan src tests/fixtures --format text --min-severity high || true
+    # The fixtures must keep producing findings in every output format.
+    - dotless scan tests/fixtures --format sarif --output fixtures.sarif --exit-zero
+    - dotless scan tests/fixtures --format gitlab --output fixtures-codequality.json --exit-zero
+    - dotless scan tests/fixtures --min-severity high && exit 1 || test $? -eq 1
+
+# Dogfood the template on this repository (fixtures are bad on purpose).
+include:
+  - local: ci/dotless.gitlab-ci.yml
+
+dotless:
+  variables:
+    DOTLESS_PATHS: "."
+    DOTLESS_ARGS: "--exclude tests/fixtures --exclude research"
+  before_script:
+    - pip install --quiet --disable-pip-version-check .
 
 # Runs the locale probes in research/ against glibc with Turkish and
 # Azerbaijani locales generated. The table it prints is the source of
