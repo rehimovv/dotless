@@ -1,0 +1,56 @@
+stages:
+  - test
+  - research
+
+test:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - pip install --quiet pytest .
+    - pytest -q
+    - dotless scan src tests/fixtures --format text --min-severity high || true
+
+# Runs the locale probes in research/ against glibc with Turkish and
+# Azerbaijani locales generated. The table it prints is the source of
+# docs/research.md.
+research:glibc:
+  stage: research
+  needs: []
+  image: debian:trixie
+  rules:
+    - changes: [research/**/*]
+    - if: $CI_PIPELINE_SOURCE == "web"
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+    RUST_FEATURES: glib
+  script:
+    - apt-get update -qq
+    - apt-get install -qq -y --no-install-recommends
+        locales build-essential pkg-config libglib2.0-dev valac
+        python3 python3-gi gir1.2-glib-2.0 gjs nodejs cargo rustc ca-certificates
+        > /dev/null
+    - for l in en_US.UTF-8 tr_TR.UTF-8 az_AZ.UTF-8; do sed -i "s/^# *\($l UTF-8\)/\1/" /etc/locale.gen; done
+    - sed -i 's/^# *\(tr_TR ISO-8859-9\)/\1/' /etc/locale.gen
+    - locale-gen
+    - locale -a
+    - gjs --version; node --version; valac --version; python3 --version; rustc --version; ldd --version | head -1
+    - sh research/run.sh
+  artifacts:
+    paths: [research/out/results.tsv, research/out/results.md]
+
+# musl does not implement locale-specific case mapping; this job shows how
+# the same C calls behave there (Alpine).
+research:musl:
+  stage: research
+  needs: []
+  image: alpine:3.20
+  rules:
+    - changes: [research/**/*]
+    - if: $CI_PIPELINE_SOURCE == "web"
+  variables:
+    LOCALES: "C.UTF-8 tr_TR.UTF-8 az_AZ.UTF-8"
+  script:
+    - apk add -q gcc musl-dev python3 musl-locales
+    - sh research/run.sh
+  artifacts:
+    paths: [research/out/results.md]

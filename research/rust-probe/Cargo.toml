@@ -1,0 +1,12 @@
+[package]
+name = "rust-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[features]
+glib = ["dep:glib", "dep:libc"]
+
+[dependencies]
+glib = { version = "0.20", optional = true }
+libc = { version = "0.2", optional = true }
