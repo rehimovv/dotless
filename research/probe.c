@@ -90,6 +90,7 @@ main (int argc, char **argv)
 
   emit_bool ("strcasecmp(\"INTEGER\", \"integer\")", strcasecmp ("INTEGER", "integer") == 0);
   emit_bool ("strncasecmp(\"FILE\", \"file\", 4)", strncasecmp ("FILE", "file", 4) == 0);
+  emit_bool ("strcasestr(\"MIME-INFO\", \"info\") != NULL", strcasestr ("MIME-INFO", "info") != NULL);
   emit_cp ("towlower(L'I')", towlower (L'I'));
   emit_cp ("towupper(L'i')", towupper (L'i'));
   emit_bool ("wcscasecmp(L\"INTEGER\", L\"integer\")", wcscasecmp (L"INTEGER", L"integer") == 0);
