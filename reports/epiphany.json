@@ -1,0 +1,67 @@
+{
+  "tool": "dotless",
+  "version": "0.1.0",
+  "files_scanned": 358,
+  "findings": [
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "epiphany/embed/ephy-embed-utils.c",
+      "line": 268,
+      "column": 20,
+      "end_column": 45,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `lowercase_host`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "lowercase_host = g_utf8_strdown (host, -1);",
+      "fingerprint": "086a6c46f9c283b332a7f93f2a2b9732"
+    },
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "epiphany/lib/ephy-search-engine.c",
+      "line": 431,
+      "column": 23,
+      "end_column": 51,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `lowercase_acronym`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "lowercase_acronym = g_utf8_strdown (acronym, -1);",
+      "fingerprint": "ff69f272d55fbe149283a6946813ca01"
+    },
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "epiphany/lib/ephy-uri-helpers.c",
+      "line": 87,
+      "column": 24,
+      "end_column": 53,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `lowercase_hostname`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "lowercase_hostname = g_utf8_strdown (hostname, -1);",
+      "fingerprint": "c9dce8490af0530c58b8aa7fb7be0946"
+    },
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "epiphany/src/preferences/webapp-additional-urls-dialog.c",
+      "line": 118,
+      "column": 34,
+      "end_column": 64,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `lower_url`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "g_autofree char *lower_url = g_utf8_strdown (urls[idx], -1);",
+      "fingerprint": "f6d5446605cbb5cee9d3e8608b10c183"
+    }
+  ]
+}

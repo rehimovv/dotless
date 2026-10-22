@@ -1,0 +1,22 @@
+{
+  "tool": "dotless",
+  "version": "0.1.0",
+  "files_scanned": 302,
+  "findings": [
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "nautilus/src/nautilus-query.c",
+      "line": 115,
+      "column": 11,
+      "end_column": 42,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `res`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "res = g_utf8_strdown (normalized, -1);",
+      "fingerprint": "fc097bf4d2dd34f43c9a949f6ede3d5b"
+    }
+  ]
+}

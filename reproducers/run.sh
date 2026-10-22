@@ -7,8 +7,6 @@ EDS_COMMIT=${EDS_COMMIT:-e3d4270d1f61a48f0b428b3e2899ae6a320438eb}
 mkdir -p out
 GLIB="$(pkg-config --cflags --libs glib-2.0)"
 
-dpkg-query -W -f='evolution-data-server ${Version}\n' evolution-data-server || true
-
 RAW="https://gitlab.gnome.org/GNOME/evolution-data-server/-/raw/$EDS_COMMIT/src"
 
 # Copied code must still match the scanned commit.

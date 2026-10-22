@@ -1,0 +1,67 @@
+{
+  "tool": "dotless",
+  "version": "0.1.0",
+  "files_scanned": 1632,
+  "findings": [
+    {
+      "rule": "DL002",
+      "severity": "low",
+      "path": "mutter/mdk/mdk-launcher-adder.c",
+      "line": 357,
+      "column": 12,
+      "end_column": 55,
+      "language": "c",
+      "call": "strcasestr",
+      "message": "strcasestr: strcasecmp()-family comparisons follow LC_CTYPE: strcasecmp(\"INTEGER\", \"integer\") != 0 in tr_TR and az_AZ.",
+      "reason": "result not compared with a constant nearby",
+      "fix": "Use g_ascii_strcasecmp()/g_ascii_strncasecmp() for ASCII keywords.",
+      "snippet": "return !!strcasestr (string, launcher_adder->search);",
+      "fingerprint": "9718ad5cd04b2edda676be54afa8888e"
+    },
+    {
+      "rule": "DL002",
+      "severity": "low",
+      "path": "mutter/src/backends/meta-input-mapper.c",
+      "line": 333,
+      "column": 18,
+      "end_column": 47,
+      "language": "c",
+      "call": "strcasestr",
+      "message": "strcasestr: strcasecmp()-family comparisons follow LC_CTYPE: strcasecmp(\"INTEGER\", \"integer\") != 0 in tr_TR and az_AZ.",
+      "reason": "result not compared with a constant nearby",
+      "fix": "Use g_ascii_strcasecmp()/g_ascii_strncasecmp() for ASCII keywords.",
+      "snippet": "if (!vendor || strcasestr (dev_name, vendor) == NULL)",
+      "fingerprint": "c479d4d483fa1e54189019f9e44b001b"
+    },
+    {
+      "rule": "DL002",
+      "severity": "low",
+      "path": "mutter/src/backends/meta-input-mapper.c",
+      "line": 339,
+      "column": 18,
+      "end_column": 47,
+      "language": "c",
+      "call": "strcasestr",
+      "message": "strcasestr: strcasecmp()-family comparisons follow LC_CTYPE: strcasecmp(\"INTEGER\", \"integer\") != 0 in tr_TR and az_AZ.",
+      "reason": "result not compared with a constant nearby",
+      "fix": "Use g_ascii_strcasecmp()/g_ascii_strncasecmp() for ASCII keywords.",
+      "snippet": "if (!serial || strcasestr (dev_name, serial) != NULL)",
+      "fingerprint": "8721989526e34a163806f7568ddb82e6"
+    },
+    {
+      "rule": "DL002",
+      "severity": "low",
+      "path": "mutter/src/backends/meta-input-mapper.c",
+      "line": 357,
+      "column": 19,
+      "end_column": 50,
+      "language": "c",
+      "call": "strcasestr",
+      "message": "strcasestr: strcasecmp()-family comparisons follow LC_CTYPE: strcasecmp(\"INTEGER\", \"integer\") != 0 in tr_TR and az_AZ.",
+      "reason": "result not compared with a constant nearby",
+      "fix": "Use g_ascii_strcasecmp()/g_ascii_strncasecmp() for ASCII keywords.",
+      "snippet": "if (strcasestr (dev_name, split[i]) != NULL)",
+      "fingerprint": "1ba7bcea4ca879114e41e8a0f2289f12"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "tool": "dotless",
+  "version": "0.1.0",
+  "files_scanned": 583,
+  "findings": [
+    {
+      "rule": "DL004",
+      "severity": "low",
+      "path": "gnome-control-center/panels/keyboard/cc-keyboard-item.c",
+      "line": 351,
+      "column": 21,
+      "end_column": 58,
+      "language": "c",
+      "call": "g_utf8_strdown",
+      "message": "g_utf8_strdown: g_utf8_strdown()/g_utf8_strup() use Turkic rules when LC_CTYPE is tr_* or az_*: \"INTEGER\" becomes \"\u0131nteger\".",
+      "reason": "stored in `alias`; no comparison with an affected constant found",
+      "fix": "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or g_utf8_casefold() to compare human-readable text.",
+      "snippet": "alias = g_utf8_strdown (translated_label, -1);",
+      "fingerprint": "83d2a0133bb7ebe637e2c63a36bb796d"
+    }
+  ]
+}
