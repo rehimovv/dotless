@@ -113,23 +113,37 @@ def is_keyish(name: str) -> bool:
     return "content_type" in "_".join(words) or "mime_type" in "_".join(words)
 
 
+_BRACKETS = {"(": ")", "[": "]", "{": "}"}
+_match_cache: tuple[str, dict[int, int]] = ("", {})
+
+
+def _bracket_map(bare: str) -> dict[int, int]:
+    """Offset of every opening bracket -> offset just past its closer.
+
+    Computed once per file in a single pass. A mismatched closer (macro
+    tricks, broken code) closes the innermost open bracket; brackets left
+    open at the end map to the end of the text.
+    """
+    global _match_cache
+    if _match_cache[0] is bare:
+        return _match_cache[1]
+    result: dict[int, int] = {}
+    stack: list[int] = []
+    for i, c in enumerate(bare):
+        if c in _BRACKETS:
+            stack.append(i)
+        elif c in ")]}" and stack:
+            result[stack.pop()] = i + 1
+    n = len(bare)
+    for i in stack:
+        result[i] = n
+    _match_cache = (bare, result)
+    return result
+
+
 def matching_close(bare: str, open_idx: int) -> int:
     """Index just past the bracket matching ``bare[open_idx]``."""
-    pairs = {"(": ")", "[": "]", "{": "}"}
-    stack = [pairs[bare[open_idx]]]
-    i = open_idx + 1
-    n = len(bare)
-    while i < n and stack:
-        c = bare[i]
-        if c in pairs:
-            stack.append(pairs[c])
-        elif c in ")]}":
-            if c == stack[-1]:
-                stack.pop()
-            else:  # unbalanced (macro magic); give up gracefully
-                return i + 1
-        i += 1
-    return i
+    return _bracket_map(bare).get(open_idx, len(bare))
 
 
 def enclosing(bare: str, pos: int, limit: int = 2000) -> tuple[int, str, int] | None:
@@ -302,7 +316,9 @@ def judge_call(src: Source, start: int, end: int, kind: str, lang: str) -> Verdi
 
     # Result stored in a variable: follow it for a while.
     bare = src.bare
-    line_start = bare.rfind("\n", 0, start) + 1
+    # Assignments sit right before the call; a bounded window keeps very
+    # long lines (minified or generated code) linear.
+    line_start = max(bare.rfind("\n", 0, start) + 1, start - 300)
     m = _ASSIGN_BEFORE.search(bare, line_start, start)
     if m:
         var = m.group(1)
