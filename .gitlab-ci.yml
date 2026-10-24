@@ -23,7 +23,7 @@ include:
 dotless:
   variables:
     DOTLESS_PATHS: "."
-    DOTLESS_ARGS: "--exclude tests/fixtures --exclude research"
+    DOTLESS_ARGS: "--exclude tests/fixtures --exclude research --exclude reproducers"
   before_script:
     - pip install --quiet --disable-pip-version-check .
 

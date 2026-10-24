@@ -11,28 +11,27 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Same images as GitLab CI; also keeps Python 3.9 available.
+    container: python:${{ matrix.python }}-slim
     strategy:
       fail-fast: false
       matrix:
         python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
+      - uses: actions/checkout@v5
       - run: pip install pytest .
       - run: pytest -q
 
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: pip install .
-      - run: dotless scan . --exclude tests/fixtures --exclude research --format sarif --output dotless.sarif --exit-zero
-      - uses: github/codeql-action/upload-sarif@v3
+      - run: dotless scan . --exclude tests/fixtures --exclude research --exclude reproducers --format sarif --output dotless.sarif --exit-zero
+      - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: dotless.sarif
           category: dotless
