@@ -1,27 +1,46 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "dotless"
-version = "0.1.0"
-description = "Find Turkish/Azerbaijani dotted and dotless I bugs caused by locale-dependent case mapping"
+dynamic = ["version"]
+description = "Find Turkish and Azerbaijani dotted/dotless I bugs caused by locale-dependent case mapping in C/GLib, Vala, Python, JavaScript and Rust"
 readme = "README.md"
-license = { text = "GPL-3.0-or-later" }
-authors = [{ name = "Ramal Rahimov" }]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Ramal Rahimov", email = "jhonaluman@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = []
-keywords = ["i18n", "l10n", "locale", "turkish", "azerbaijani", "gnome", "linter", "static-analysis"]
+keywords = [
+    "i18n", "l10n", "locale", "turkish", "azerbaijani", "gnome", "glib",
+    "linter", "static-analysis", "dotless-i", "case-mapping",
+]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: C",
+    "Programming Language :: JavaScript",
     "Programming Language :: Python :: 3",
-    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
     "Topic :: Software Development :: Localization",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 
 [project.urls]
 Homepage = "https://gitlab.com/rehimovv/dotless"
+Source = "https://gitlab.com/rehimovv/dotless"
+Issues = "https://gitlab.com/rehimovv/dotless/-/issues"
+Changelog = "https://gitlab.com/rehimovv/dotless/-/blob/main/CHANGELOG.md"
 Mirror = "https://github.com/rehimovv/dotless"
 
 [project.scripts]
@@ -29,6 +48,9 @@ dotless = "dotless.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest"]
+
+[tool.setuptools.dynamic]
+version = { attr = "dotless.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
