@@ -8,18 +8,21 @@
 #   DOTLESS_PATHS         paths to scan (default ".")
 #   DOTLESS_MIN_SEVERITY  "low" or "high" (default "high")
 #   DOTLESS_ARGS          extra arguments, e.g. "--exclude tests" (fnmatch patterns)
+#   DOTLESS_VERSION       version from PyPI, e.g. "1.0.0" (default: latest)
+#
+# [tool.dotless] settings in your pyproject.toml are honoured as well.
 
 dotless:
   stage: test
-  image: python:3.12-slim
+  image: python:3.13-slim
   needs: []
   variables:
     DOTLESS_PATHS: "."
     DOTLESS_MIN_SEVERITY: "high"
     DOTLESS_ARGS: ""
-    DOTLESS_VERSION: "main"
+    DOTLESS_VERSION: ""
   before_script:
-    - pip install --quiet --disable-pip-version-check "dotless @ https://gitlab.com/rehimovv/dotless/-/archive/${DOTLESS_VERSION}/dotless-${DOTLESS_VERSION}.tar.gz"
+    - pip install --quiet --disable-pip-version-check "dotless${DOTLESS_VERSION:+==$DOTLESS_VERSION}"
   script:
     - dotless scan $DOTLESS_PATHS --min-severity "$DOTLESS_MIN_SEVERITY" $DOTLESS_ARGS --format gitlab --output gl-code-quality-report.json --exit-zero
     - dotless scan $DOTLESS_PATHS --min-severity "$DOTLESS_MIN_SEVERITY" $DOTLESS_ARGS
