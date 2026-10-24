@@ -22,6 +22,7 @@ class Rule:
     summary: str
     fix: str
     help_uri: str = "https://gitlab.com/rehimovv/dotless/-/blob/main/docs/rules.md"
+    title: str = ""  # one-line headline for text output
 
 
 RULES: dict[str, Rule] = {
@@ -34,8 +35,9 @@ RULES: dict[str, Rule] = {
             "tolower()/toupper() follow LC_CTYPE: in tr_TR.UTF-8 and az_AZ.UTF-8 "
             "glibc leaves 'I' and 'i' unchanged, in tr_TR.ISO-8859-9 it returns "
             "the dotless/dotted variants.",
-            "Use g_ascii_tolower()/g_ascii_toupper() for ASCII data "
-            "(libc: a locale-independent helper; Rust: u8::to_ascii_lowercase()).",
+            "Use g_ascii_tolower()/g_ascii_toupper() for ASCII data; in Rust, "
+            "u8::to_ascii_lowercase()/to_ascii_uppercase().",
+            title="tolower()/toupper() depend on the locale",
         ),
         Rule(
             "DL002",
@@ -44,6 +46,7 @@ RULES: dict[str, Rule] = {
             "strcasecmp()-family comparisons follow LC_CTYPE: "
             "strcasecmp(\"INTEGER\", \"integer\") != 0 in tr_TR and az_AZ.",
             "Use g_ascii_strcasecmp()/g_ascii_strncasecmp() for ASCII keywords.",
+            title="strcasecmp()-style comparison depends on the locale",
         ),
         Rule(
             "DL003",
@@ -52,6 +55,7 @@ RULES: dict[str, Rule] = {
             "towlower()/towupper() map 'I' to U+0131 and 'i' to U+0130 in Turkic locales.",
             "Use g_unichar_tolower()/g_unichar_toupper() (locale independent), "
             "or g_ascii_tolower() for ASCII data.",
+            title="towlower()/towupper() depend on the locale",
         ),
         Rule(
             "DL004",
@@ -61,6 +65,7 @@ RULES: dict[str, Rule] = {
             "tr_* or az_*: \"INTEGER\" becomes \"ınteger\".",
             "Use g_ascii_strdown()/g_ascii_strup() for identifiers, or "
             "g_utf8_casefold() to compare human-readable text.",
+            title="g_utf8_strdown()/g_utf8_strup() follow Turkic rules in tr/az locales",
         ),
         Rule(
             "DL005",
@@ -69,6 +74,7 @@ RULES: dict[str, Rule] = {
             "Deprecated g_strdown()/g_strup()/g_strcasecmp()/g_strncasecmp() "
             "use the C library's locale-dependent tolower()/toupper().",
             "Use g_ascii_strdown()/g_ascii_strup()/g_ascii_strcasecmp().",
+            title="deprecated GLib case function depends on the locale",
         ),
         Rule(
             "DL006",
@@ -78,6 +84,7 @@ RULES: dict[str, Rule] = {
             "and follow the Turkic rules.",
             "Use string.ascii_down()/string.ascii_up() for identifiers, or "
             "string.casefold() to compare human-readable text.",
+            title="string.down()/string.up() follow Turkic rules in tr/az locales",
         ),
         Rule(
             "DL007",
@@ -88,6 +95,7 @@ RULES: dict[str, Rule] = {
             "tr_TR/az_AZ.",
             "Use toLowerCase()/toUpperCase() (locale independent), or pass an "
             "explicit locale.",
+            title="toLocaleLowerCase()/toLocaleUpperCase() without an explicit locale",
         ),
         Rule(
             "DL008",
@@ -97,6 +105,7 @@ RULES: dict[str, Rule] = {
             "as different letters in Turkic locales.",
             "Compare a.toLowerCase() === b.toLowerCase(), or pass an explicit "
             "locale to localeCompare().",
+            title="localeCompare() equality with sensitivity 'base' or 'accent'",
         ),
         Rule(
             "DL009",
@@ -106,6 +115,7 @@ RULES: dict[str, Rule] = {
             "b'INTEGER' does not match b'integer' in tr_TR/az_AZ.",
             "Drop re.LOCALE (decode to str and use re.IGNORECASE), or use "
             "explicit character classes.",
+            title="re.LOCALE with re.IGNORECASE depends on the locale",
         ),
     )
 }

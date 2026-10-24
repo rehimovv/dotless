@@ -48,10 +48,11 @@ def text(findings: list[Finding], files: int, color: bool = False) -> str:
     lines = []
     for f in findings:
         sev = c("1;31", "high") if f.severity == "high" else c("33", "low")
-        lines.append(f"{c('1', f'{_rel(f.path)}:{f.line}:{f.column}')}: [{sev}] {f.rule} {f.message}")
+        title = RULES[f.rule].title or f.message
+        lines.append(f"{c('1', f'{_rel(f.path)}:{f.line}:{f.column}')}: [{sev}] {f.rule} {title}")
         lines.append(f"    {f.snippet}")
-        lines.append(f"    why: {f.reason}")
-        lines.append(f"    fix: {f.fix}")
+        lines.append(f"    {c('36', 'why:')} {f.reason}")
+        lines.append(f"    {c('36', 'fix:')} {f.fix}")
     lines.append(summary(findings, files))
     return "\n".join(lines) + "\n"
 
