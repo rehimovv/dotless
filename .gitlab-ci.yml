@@ -1,6 +1,7 @@
 stages:
   - test
   - research
+  - publish
 
 test:
   stage: test
@@ -35,6 +36,8 @@ research:glibc:
   needs: []
   image: debian:trixie
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [research/**/*]
     - if: $CI_PIPELINE_SOURCE == "web"
   variables:
@@ -63,6 +66,8 @@ research:musl:
   needs: []
   image: alpine:3.20
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [research/**/*]
     - if: $CI_PIPELINE_SOURCE == "web"
   variables:
@@ -80,6 +85,8 @@ reproducers:
   needs: []
   image: debian:trixie
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [reproducers/**/*]
     - if: $CI_PIPELINE_SOURCE == "web"
   variables:
@@ -91,3 +98,54 @@ reproducers:
         curl ca-certificates > /dev/null
     - for l in tr_TR az_AZ; do localedef -i $l -f UTF-8 $l.UTF-8; done
     - sh reproducers/run.sh
+
+# Publishing uses PyPI trusted publishing: the job's OIDC identity is
+# exchanged for a short-lived upload token, so no secret is stored here.
+.publish:
+  stage: publish
+  image: python:3.13-slim
+  needs: [test]
+  script:
+    - python -m pip install --quiet --disable-pip-version-check build twine id
+    - python -m build
+    - twine check --strict dist/*
+    - OIDC_TOKEN=$(python -m id "$AUDIENCE")
+    - >-
+      UPLOAD_TOKEN=$(python -c "import json, os, urllib.request as r;
+      req = r.Request(os.environ['MINT_URL'], data=json.dumps({'token': os.environ['OIDC_TOKEN']}).encode(),
+      headers={'Content-Type': 'application/json'});
+      print(json.load(r.urlopen(req))['token'])")
+    - twine upload --non-interactive --repository-url "$UPLOAD_URL" -u __token__ -p "$UPLOAD_TOKEN" dist/*
+
+# Manual dry run against TestPyPI from main.
+publish:testpypi:
+  extends: .publish
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+  environment: testpypi
+  id_tokens:
+    TESTPYPI_ID_TOKEN:
+      aud: testpypi
+  variables:
+    AUDIENCE: testpypi
+    MINT_URL: https://test.pypi.org/_/oidc/mint-token
+    UPLOAD_URL: https://test.pypi.org/legacy/
+
+# Every v* tag is released to PyPI. The tag must match dotless.__version__.
+publish:pypi:
+  extends: .publish
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+  environment: pypi
+  id_tokens:
+    PYPI_ID_TOKEN:
+      aud: pypi
+  variables:
+    AUDIENCE: pypi
+    MINT_URL: https://pypi.org/_/oidc/mint-token
+    UPLOAD_URL: https://upload.pypi.org/legacy/
+  before_script:
+    - VERSION=$(python -c "import sys; sys.path.insert(0, 'src'); import dotless; print(dotless.__version__)")
+    - test "v$VERSION" = "$CI_COMMIT_TAG" || { echo "tag $CI_COMMIT_TAG does not match version $VERSION"; exit 1; }
