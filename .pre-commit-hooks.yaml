@@ -1,0 +1,6 @@
+- id: dotless
+  name: dotless
+  description: Find dotted/dotless I bugs caused by locale-dependent case mapping.
+  entry: dotless scan --force-exclude
+  language: python
+  files: '\.(c|h|cc|cpp|cxx|hh|hpp|vala|gs|py|js|mjs|rs)$'
