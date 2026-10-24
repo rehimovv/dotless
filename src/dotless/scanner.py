@@ -344,7 +344,15 @@ def scan_text(text: str, path: str, lang: str) -> list[Finding]:
     return findings
 
 
-def iter_files(paths: Iterable[str], excludes: Iterable[str] = ()) -> Iterator[tuple[str, str]]:
+def iter_files(
+    paths: Iterable[str], excludes: Iterable[str] = (), force_exclude: bool = False
+) -> Iterator[tuple[str, str]]:
+    """Source files under ``paths`` as (path, language).
+
+    Exclude patterns apply to files found while walking directories. Files
+    named explicitly are always scanned, unless ``force_exclude`` is set
+    (useful for pre-commit, which passes file names).
+    """
     excludes = tuple(excludes)
 
     def excluded(rel: str) -> bool:
@@ -354,7 +362,7 @@ def iter_files(paths: Iterable[str], excludes: Iterable[str] = ()) -> Iterator[t
     for root in paths:
         if os.path.isfile(root):
             lang = language_of(root)
-            if lang:
+            if lang and not (force_exclude and _explicit_excluded(root, excluded)):
                 yield root, lang
             continue
         for dirpath, dirnames, filenames in os.walk(root):
@@ -369,19 +377,42 @@ def iter_files(paths: Iterable[str], excludes: Iterable[str] = ()) -> Iterator[t
                     yield full, lang
 
 
-def scan_paths(paths: Iterable[str], min_severity: str = "low", excludes: Iterable[str] = ()) -> tuple[list[Finding], int]:
-    """Scan files and directories. Returns (findings, number of files scanned)."""
+def _explicit_excluded(path: str, excluded: Callable[[str], bool]) -> bool:
+    """Whether an explicitly named file, or one of its directories, is excluded."""
+    rel = os.path.relpath(path).replace(os.sep, "/")
+    parts = rel.split("/")
+    if any(p in DEFAULT_EXCLUDES for p in parts[:-1]):
+        return True
+    return any(excluded("/".join(parts[: i + 1])) for i in range(len(parts)))
+
+
+def scan_paths(
+    paths: Iterable[str],
+    min_severity: str = "low",
+    excludes: Iterable[str] = (),
+    disable: Iterable[str] = (),
+    force_exclude: bool = False,
+    errors: list[str] | None = None,
+) -> tuple[list[Finding], int]:
+    """Scan files and directories. Returns (findings, number of files scanned).
+
+    Files that cannot be read are skipped; their error messages are added
+    to ``errors`` when given.
+    """
     findings: list[Finding] = []
     count = 0
     floor = severity_rank(min_severity)
-    for path, lang in iter_files(paths, excludes):
-        count += 1
+    disabled = set(disable)
+    for path, lang in iter_files(paths, excludes, force_exclude):
         try:
             with open(path, "rb") as fh:
                 text = fh.read().decode("utf-8", errors="replace")
-        except OSError:
+        except OSError as e:
+            if errors is not None:
+                errors.append(f"{path}: {e.strerror or e}")
             continue
+        count += 1
         for f in scan_text(text, path.replace(os.sep, "/"), lang):
-            if severity_rank(f.severity) >= floor:
+            if severity_rank(f.severity) >= floor and f.rule not in disabled:
                 findings.append(f)
     return findings, count
